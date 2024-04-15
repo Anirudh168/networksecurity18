@@ -1,0 +1,66 @@
+import javax.net.ssl.*; 
+import java.io.BufferedReader; 
+import java.io.IOException; 
+import java.io.InputStreamReader; 
+import java.io.PrintWriter; 
+import java.net.ServerSocket; 
+import java.net.Socket; 
+import java.security.KeyStore; 
+public class SecureServer { 
+public static void main(String[] args) { 
+int port = 8888; 
+ 
+try { 
+// Load keystore 
+char[] keystorePassword = "password".toCharArray(); 
+KeyStore keyStore = KeyStore.getInstance("JKS"); 
+keyStore.load(SecureServer.class.getResourceAsStream("/path/to/your/keystore.jks"), 
+keystorePassword); 
+ 
+// Set up key manager factory 
+KeyManagerFactory keyManagerFactory =KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()); 
+keyManagerFactory.init(keyStore, keystorePassword); 
+ 
+// Set up trust manager factory 
+TrustManagerFactory trustManagerFactory = 
+TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()); 
+trustManagerFactory.init(keyStore); 
+ 
+// Set up SSL context 
+SSLContext sslContext = SSLContext.getInstance("TLS"); 
+sslContext.init(keyManagerFactory.getKeyManagers(), 
+trustManagerFactory.getTrustManagers(), null); 
+ 
+// Create SSL server socket factory 
+SSLServerSocketFactory sslServerSocketFactory = 
+sslContext.getServerSocketFactory(); 
+ 
+// Create server socket 
+ServerSocket serverSocket = sslServerSocketFactory.createServerSocket(port); 
+System.out.println("Server started. Waiting for connections..."); 
+// Accept client connection 
+Socket clientSocket = serverSocket.accept(); 
+ 
+// Set up input and output streams with SSL 
+BufferedReader in = new BufferedReader(new 
+InputStreamReader(clientSocket.getInputStream())); 
+PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true); 
+ 
+// Read and print the client's message 
+String clientMessage = in.readLine(); 
+System.out.println("Received from client: " + clientMessage); 
+ 
+// Send a response back to the client 
+out.println("Server response: Message received."); 
+ 
+// Close the connection 
+in.close(); 
+out.close(); 
+clientSocket.close(); 
+serverSocket.close(); 
+ 
+} catch (Exception e) { 
+e.printStackTrace();
+}
+}
+}
