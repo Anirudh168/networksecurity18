@@ -1,0 +1,38 @@
+import java.security.KeyFactory; 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator; 
+import java.security.PrivateKey; 
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec; 
+import java.security.spec.X509EncodedKeySpec; 
+import javax.crypto.Cipher;
+import javax.crypto.KeyAgreement; 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+public class asymmetric {
+public static void main(String[] args) throws Exception {
+KeyPairGenerator aliceKeyPairGenerator = KeyPairGenerator.getInstance("DiffieHellman");
+KeyPair aliceKeyPair = aliceKeyPairGenerator.generateKeyPair(); 
+KeyPairGenerator bobKeyPairGenerator =
+KeyPairGenerator.getInstance("DiffieHellman");
+KeyPair bobKeyPair = bobKeyPairGenerator.generateKeyPair();
+KeyAgreement aliceKeyAgreement = KeyAgreement.getInstance("DiffieHellman"); 
+aliceKeyAgreement.init(aliceKeyPair.getPrivate()); 
+aliceKeyAgreement.doPhase(bobKeyPair.getPublic(), true); 
+byte[] aliceSharedSecret =
+aliceKeyAgreement.generateSecret();
+SecretKey aliceSharedSecretKey = new SecretKeySpec(aliceSharedSecret, 0, 16, "AES"); 
+KeyAgreement bobKeyAgreement = KeyAgreement.getInstance("DiffieHellman"); 
+bobKeyAgreement.init(bobKeyPair.getPrivate()); 
+bobKeyAgreement.doPhase(aliceKeyPair.getPublic(), true);
+byte[] bobSharedSecret = bobKeyAgreement.generateSecret();
+SecretKey bobSharedSecretKey = new SecretKeySpec(bobSharedSecret, 0, 16, "AES");
+Cipher aliceCipher = Cipher.getInstance("AES"); 
+aliceCipher.init(Cipher.ENCRYPT_MODE, aliceSharedSecretKey);
+byte[] encryptedMessage = aliceCipher.doFinal("Hello Bob!".getBytes()); 
+Cipher bobCipher = Cipher.getInstance("AES"); 
+bobCipher.init(Cipher.DECRYPT_MODE, bobSharedSecretKey);
+byte[] decryptedMessage = bobCipher.doFinal(encryptedMessage); 
+System.out.println("Decrypted Message: " + new String(decryptedMessage));
+}
+}
